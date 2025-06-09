@@ -16,7 +16,6 @@ The solution includes advanced features:
 - **Fault Tolerance**: Resilience4j with circuit breaker
 - **Observability**: OpenTelemetry with Zipkin
 - **In-Memory H2**: Used for storing prices and events
-- **In-Memory H2**: Used for storing prices and events
 - **Swagger**: Used to interact with and explore the available API endpoints.
 
 ---
