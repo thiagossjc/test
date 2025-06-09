@@ -35,7 +35,7 @@ public class OpenApiConfig {
     public GroupedOpenApi adminApi() {
         return GroupedOpenApi.builder()
                 .group("test")
-                .pathsToMatch("/api/prices","/api/prices/all")
+                .pathsToMatch("/api/prices","/api/prices/filter")
                 .build();
     }
 }
