@@ -60,7 +60,7 @@ public class PriceController {
                     description = "Date of query in format dd/MM/yyyy",
                     example = "14/06/2020",
                     required = true,
-                    schema = @Schema(type = "string", pattern = "dd/MM/yyyy")
+                    schema = @Schema(type = "string", pattern = "\\d{2}/\\d{2}/\\d{4}")
             )
             String date,
 
@@ -69,7 +69,7 @@ public class PriceController {
                     description = "Time of query in format HH:mm",
                     example = "16:00",
                     required = true,
-                    schema = @Schema(type = "string", pattern = "HH:mm")
+                    schema = @Schema(type = "string", pattern = "\\d{2}:\\d{2}")
             )
             String time) {
 
