@@ -1,0 +1,26 @@
+spring:
+  config:
+    activate:
+      on-profile: test
+  kafka:
+    bootstrap-servers: ${spring.embedded.kafka.brokers}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+  cache:
+    type: caffeine
+    cache-names: prices
+    caffeine:
+      spec: maximumSize=1000,expireAfterWrite=10m
+grpc:
+  server:
+    enabled: true
+    port: 9091
+logging:
+  level:
+    org.springframework: TRACE
+    org.inditex.prices: TRACE
+    org.apache.kafka: TRACE
+    kafka: TRACE
+    io.r2dbc.h2: TRACE
+    org.h2: TRACE

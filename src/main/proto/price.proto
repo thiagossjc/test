@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+option java_package = "org.inditex.prices.infrastructure.adapter.grpc";
+option java_multiple_files = true;
+
+service PriceService {
+  rpc getPrice (PriceRequest) returns (PriceResponse);
+}
+
+message PriceRequest {
+  int64 product_id = 1;
+  int64 brand_id = 2;
+  string date = 3;
+  string time = 4;
+}
+
+message PriceResponse {
+  int64 product_id = 1;
+  int64 brand_id = 2;
+  int32 price_list = 3;
+  string start_date = 4;
+  string end_date = 5;
+  double price = 6;
+}

@@ -1,0 +1,93 @@
+spring:
+  application:
+    name: inditex-prices
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  r2dbc:
+    url: r2dbc:h2:mem:///testdb;DB_CLOSE_DELAY=-1;TRACE_LEVEL_SYSTEM_OUT=3
+    username: sa
+    password:
+  webflux:
+    hiddenmethod:
+      filter:
+        enabled: true
+  kafka:
+    enabled: true
+    bootstrap-servers: localhost:29092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+  cache:
+    type: caffeine
+    cache-names: prices
+    caffeine:
+      spec: maximumSize=1000,expireAfterWrite=10m
+  aot:
+    enabled: false
+
+inditex:
+  kafka:
+    topic: priceTopic
+
+opentelemetry:
+  resource:
+    service:
+      name: inditex-prices # Identifica el servicio en Zipkin
+  zipkin:
+    endpoint: http://localhost:9411/api/v2/spans
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      priceService:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30000ms
+        permittedNumberOfCallsInHalfOpenState: 2
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        slidingWindowType: COUNT_BASED
+
+server:
+  port: 8080
+grpc:
+  server:
+    port: 9090
+logging:
+  level:
+    io.r2dbc.h2.H2ConnectionFactory: TRACE
+    io.r2dbc.h2: TRACE
+    io.r2dbc.spi: DEBUG
+    io.r2dbc.h2.ExtendedH2Connection: DEBUG
+    io.r2dbc.h2.H2Result: TRACE
+    org.springframework.r2dbc.core: DEBUG
+    org.springframework.data.r2dbc.core: DEBUG
+    org.springframework.data.r2dbc.connectionfactory: DEBUG
+
+    reactor.core: DEBUG
+    reactor.netty: DEBUG
+    org.springframework: DEBUG  # Cambia de INFO a DEBUG
+    org.inditex.prices: DEBUG
+    org.h2: TRACE
+    com.h2database: TRACE
+    org.springframework.boot.web: TRACE  # Para capturar errores en el servlet
+    org.springframework.web: TRACE  # Para capturar errores en el manejo de rutas
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics # Habilita métricas para Resilience4j
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html

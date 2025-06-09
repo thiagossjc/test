@@ -1,0 +1,41 @@
+asyncapi: 2.6.0
+info:
+  title: Inditex Price Events API
+  version: 1.0.0
+  description: Asynchronous API for publishing price query events
+servers:
+  production:
+    url: kafka://localhost:29092
+    protocol: kafka
+channels:
+  priceTopic:
+    subscribe:
+      summary: Receive notifications when a price is queried
+      message:
+        contentType: application/json
+        payload:
+          $ref: '#/components/schemas/PriceEvent'
+components:
+  schemas:
+    PriceEvent:
+      type: object
+      properties:
+        productId:
+          type: integer
+          format: int64
+        brandId:
+          type: integer
+          format: int64
+        priceList:
+          type: integer
+        queryDate:
+          type: string
+          format: date-time
+        price:
+          type: number
+          format: double
+        eventType:
+          type: string
+        createdAt:
+          type: string
+          format: date-time

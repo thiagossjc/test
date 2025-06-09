@@ -1,0 +1,40 @@
+package org.inditex.prices.application.mapper;
+
+import org.inditex.prices.application.dto.PriceResponseDto;
+import org.inditex.prices.domain.model.Price;
+import org.springframework.stereotype.Component;
+
+import java.time.format.DateTimeFormatter;
+
+/**
+ * Mapper for converting Price domain model to PriceResponseDto manually.
+ */
+@Component
+public class PriceMapper {
+
+    /**
+     * Formatter for date and time with pattern "dd/MM/yyyy HH:mm:ss".
+     */
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+
+    /**
+     * Converts a Price to a PriceResponseDto.
+     *
+     * @param price the Price to convert
+     * @return the converted PriceResponseDto, or null if price is null
+     */
+    public PriceResponseDto toResponse(Price price) {
+        if (price == null) {
+            return null;
+        }
+
+        return PriceResponseDto.builder()
+                .productId(price.getProductId())
+                .brandId(price.getBrandId())
+                .priceList(price.getPriceList())
+                .startDate(price.getStartDate().format(FORMATTER))
+                .endDate(price.getEndDate() != null ? price.getEndDate().format(FORMATTER) : null)
+                .price(price.getPrice())
+                .build();
+    }
+}
