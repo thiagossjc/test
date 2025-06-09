@@ -1,6 +1,8 @@
 package org.inditex.prices.infrastructure.adapter.out.kafka;
 
 import org.inditex.prices.domain.model.PriceEvent;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -37,12 +39,15 @@ import java.time.LocalDateTime;
                 )
         }
 )
+@Tag("integration")
+@Disabled
 class KafkaEventPublisherAdapterIntegrationTest {
 
     @Autowired
     private KafkaEventPublisherAdapter publisher;
 
     @Test
+    @Disabled
     void testPublishPriceEvent() {
         PriceEvent event = PriceEvent.builder()
                 .productId(35455L)

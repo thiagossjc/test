@@ -25,35 +25,68 @@ import java.time.format.DateTimeFormatter;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
+/**
+ * Unit tests for the {@link PriceService} class.
+ * Tests the functionality of price-related operations, including finding applicable prices
+ * and handling cases where prices are not found.
+ */
 class PriceServiceTest {
 
+    /**
+     * Mock for the use case to find applicable prices.
+     */
     @Mock
     private FindApplicablePriceUseCase findPriceUseCase;
 
+    /**
+     * Mock for the use case to store price events.
+     */
     @Mock
     private StorePriceEventUseCase storeEventUseCase;
 
+    /**
+     * Mock for the tracing port to handle observability.
+     */
     @Mock
     private TracePort tracingPort;
 
-
+    /**
+     * Mock for the OpenTelemetry tracer.
+     */
     @Mock
     private Tracer tracer;
 
+    /**
+     * Mock for the circuit breaker port to handle fault tolerance.
+     */
     @Mock
     private CircuitBreakerPort circuitBreakerPort;
 
+    /**
+     * Mock for the price mapper to convert between domain models and DTOs.
+     */
     @Mock
-    private PriceMapper priceMapper; // Nuevo mock para PriceMapper
+    private PriceMapper priceMapper;
 
+    /**
+     * Instance of {@link PriceService} with injected mocks for testing.
+     */
     @InjectMocks
     private PriceService priceService;
 
+    /**
+     * Sets up the test environment by initializing mocks before each test.
+     */
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
     }
 
+    /**
+     * Tests the {@link PriceService#findPrice(Long, Long, LocalDateTime)} method
+     * to ensure it correctly retrieves a price for a given product, brand, and date.
+     * Verifies that the returned {@link PriceResponseDto} contains the expected values.
+     */
     @Test
     void testFindPrice() {
         // Arrange
@@ -71,12 +104,10 @@ class PriceServiceTest {
         responseDto.setProductId(35455L);
         responseDto.setBrandId(1L);
         responseDto.setPriceList(0);
-
+        responseDto.setPrice(new BigDecimal("35.5"));
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
-
         responseDto.setStartDate(LocalDateTime.parse("2020-06-14T00:00:00").format(formatter));
         responseDto.setEndDate(LocalDateTime.parse("2020-12-31T23:59:59").format(formatter));
-
 
         // Simulation findPriceUseCase
         when(findPriceUseCase.findPrice(anyLong(), anyLong(), any(LocalDateTime.class))).thenReturn(Mono.just(price));
@@ -91,10 +122,10 @@ class PriceServiceTest {
                 eq("productId"), anyString(),
                 eq("brandId"), anyString(),
                 eq("date"), anyString()
-        )).thenAnswer(invocation -> invocation.getArgument(1)); // Devuelve el Mono pasado como segundo argumento
-
+        )).thenAnswer(invocation -> invocation.getArgument(1));
+        // Simulation circuitBreakerPort
         when(circuitBreakerPort.executeCircuitBreaker(eq("priceService"), any(Mono.class)))
-                .thenAnswer(invocation -> invocation.getArgument(1)); // Devuelve el Mono pasado como segundo argumento
+                .thenAnswer(invocation -> invocation.getArgument(1));
 
         // Act
         Mono<PriceResponseDto> result = priceService.findPrice(request.getProductId(), request.getBrandId(), request.getDate());
@@ -104,7 +135,7 @@ class PriceServiceTest {
                 .assertNext(response -> {
                     assertEquals(35455L, response.getProductId());
                     assertEquals(1L, response.getBrandId());
-                    assertEquals(35.5, response.getPrice().doubleValue());
+                    assertEquals(new BigDecimal("35.5"), response.getPrice());
                 })
                 .verifyComplete();
 
@@ -121,9 +152,13 @@ class PriceServiceTest {
         verify(circuitBreakerPort, times(1)).executeCircuitBreaker(eq("priceService"), any(Mono.class));
     }
 
+    /**
+     * Tests the {@link PriceService#findPrice(Long, Long, LocalDateTime)} method
+     * when no price is found for the given product, brand, and date.
+     * Verifies that a {@link PriceNotFoundException} is thrown with the appropriate message.
+     */
     @Test
     void testFindPriceNotFound() {
-
         LocalDateTime now = LocalDateTime.now();
 
         when(findPriceUseCase.findPrice(anyLong(), anyLong(), any(LocalDateTime.class)))

@@ -6,10 +6,7 @@ import io.grpc.ManagedChannelBuilder;
 import org.inditex.prices.infrastructure.adapter.grpc.PriceRequest;
 import org.inditex.prices.infrastructure.adapter.grpc.PriceResponse;
 import org.inditex.prices.infrastructure.adapter.grpc.PriceServiceGrpc;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -30,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Tag("integration")
 class PriceGrpcServiceIntegrationTest {
 
     /**

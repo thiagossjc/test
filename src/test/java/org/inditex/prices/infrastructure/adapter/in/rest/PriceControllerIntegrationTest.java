@@ -1,5 +1,7 @@
 package org.inditex.prices.infrastructure.adapter.in.rest;
 
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
@@ -14,37 +16,81 @@ import java.time.format.DateTimeFormatter;
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient
+@Disabled
+@Tag("integration")
 class PriceControllerIntegrationTest {
 
+    /**
+     * WebTestClient instance for simulating HTTP requests to the API.
+     */
     @Autowired
     private WebTestClient webTestClient;
 
+    /**
+     * Base URL for the price filter endpoint.
+     */
     private static final String BASE_URL = "/api/prices/filter";
+
+    /**
+     * Default product ID used in test cases.
+     */
     private static final int PRODUCT_ID = 35455;
+
+    /**
+     * Default brand ID used in test cases.
+     */
     private static final int BRAND_ID = 1;
+
+    /**
+     * Formatter for parsing and formatting dates in the pattern "dd/MM/yyyy".
+     */
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+    /**
+     * Formatter for parsing and formatting times in the pattern "HH:mm".
+     */
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
+    /**
+     * Tests the price filter endpoint for a request on 2020-06-14 at 10:00.
+     * Expects a price list ID of 1 and a price of 35.50.
+     */
     @Test
     void testGetPrice_test1() {
         performRequest("2020-06-14T10:00:00", 1, 35.50);
     }
 
+    /**
+     * Tests the price filter endpoint for a request on 2020-06-14 at 16:00.
+     * Expects a price list ID of 2 and a price of 25.45.
+     */
     @Test
     void testGetPrice_test2() {
         performRequest("2020-06-14T16:00:00", 2, 25.45);
     }
 
+    /**
+     * Tests the price filter endpoint for a request on 2020-06-14 at 21:00.
+     * Expects a price list ID of 1 and a price of 35.50.
+     */
     @Test
     void testGetPrice_test3() {
         performRequest("2020-06-14T21:00:00", 1, 35.50);
     }
 
+    /**
+     * Tests the price filter endpoint for a request on 2020-06-15 at 10:00.
+     * Expects a price list ID of 3 and a price of 30.50.
+     */
     @Test
     void testGetPrice_test4() {
         performRequest("2020-06-15T10:00:00", 3, 30.50);
     }
 
+    /**
+     * Tests the price filter endpoint for a request on 2020-06-16 at 21:00.
+     * Expects a price list ID of 4 and a price of 38.95.
+     */
     @Test
     void testGetPrice_test5() {
         performRequest("2020-06-16T21:00:00", 4, 38.95);

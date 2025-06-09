@@ -32,7 +32,7 @@ public class PriceMapper {
                 .productId(price.getProductId())
                 .brandId(price.getBrandId())
                 .priceList(price.getPriceList())
-                .startDate(price.getStartDate().format(FORMATTER))
+                .startDate(price.getStartDate() != null ? price.getStartDate().format(FORMATTER) : null)
                 .endDate(price.getEndDate() != null ? price.getEndDate().format(FORMATTER) : null)
                 .price(price.getPrice())
                 .build();
