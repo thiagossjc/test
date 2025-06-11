@@ -2,7 +2,9 @@ package org.inditex.prices.domain.model;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -11,6 +13,8 @@ import java.time.LocalDateTime;
  * Represents a price entity in the domain model.
  */
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class Price {
     /**
      * The identifier of the brand associated with the price.

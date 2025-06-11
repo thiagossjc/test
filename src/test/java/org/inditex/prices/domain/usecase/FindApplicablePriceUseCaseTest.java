@@ -54,7 +54,7 @@ class FindApplicablePriceUseCaseTest {
         when(repositoryPort.findApplicablePrice(productId, brandId, date))
                 .thenReturn(Mono.just(price));
 
-        StepVerifier.create(useCase.findPrice(productId, brandId, date))
+        StepVerifier.create(useCase.findApplicablePrice(productId, brandId, date))
                 .expectNext(price)
                 .verifyComplete();
 
@@ -73,7 +73,7 @@ class FindApplicablePriceUseCaseTest {
         when(repositoryPort.findApplicablePrice(productId, brandId, date))
                 .thenReturn(Mono.error(new RuntimeException("Repository error")));
 
-        StepVerifier.create(useCase.findPrice(productId, brandId, date))
+        StepVerifier.create(useCase.findApplicablePrice(productId, brandId, date))
                 .expectError(RuntimeException.class)
                 .verify();
 

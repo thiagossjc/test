@@ -3,8 +3,10 @@ package org.inditex.prices.infrastructure.adapter.out.kafka;
 import lombok.extern.slf4j.Slf4j;
 import org.inditex.prices.application.port.CircuitBreakerPort;
 import org.inditex.prices.application.port.EventPublisherPort;
+import org.inditex.prices.domain.execption.PriceNotFoundException;
 import org.inditex.prices.domain.model.PriceEvent;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.kafka.sender.KafkaSender;
@@ -93,7 +95,8 @@ public class KafkaEventPublisherAdapter implements EventPublisherPort {
                 CIRCUIT_BREAKER_NAME,
                 kafkaSender.send(Mono.just(record))
                         .then()
-                        .onErrorResume(this::publishEventFallback)
+                        .onErrorResume(this::publishEventFallback),
+                PriceNotFoundException.class
         );
     }
 

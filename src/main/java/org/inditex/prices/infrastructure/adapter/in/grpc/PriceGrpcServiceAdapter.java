@@ -35,12 +35,15 @@ public class PriceGrpcServiceAdapter extends PriceServiceGrpc.PriceServiceImplBa
     /**
      * Service port interface that provides the business logic for retrieving prices.
      */
-    private final PriceServicePort service;
+    private final PriceServicePort priceServicePort;
 
     /**
      * OpenTelemetry tracer used for creating and managing spans for distributed tracing.
      */
     private final Tracer tracer;
+
+
+
 
     /**
      * Handles the gRPC request to retrieve price information for a given product, brand, and date/time.
@@ -78,8 +81,7 @@ public class PriceGrpcServiceAdapter extends PriceServiceGrpc.PriceServiceImplBa
                         return Mono.error(Status.INVALID_ARGUMENT.withDescription(e.getMessage()).asRuntimeException());
                     }
 
-                    return service.findPrice(req.getProductId(), req.getBrandId(), dateTime)
-                            .switchIfEmpty(Mono.error(Status.NOT_FOUND.withDescription("Price not found").asRuntimeException()))
+                    return priceServicePort.findApplicablePrice(req.getProductId(), req.getBrandId(), dateTime)
                             .map(price -> PriceResponse.newBuilder()
                                     .setProductId(price.getProductId())
                                     .setBrandId(price.getBrandId())

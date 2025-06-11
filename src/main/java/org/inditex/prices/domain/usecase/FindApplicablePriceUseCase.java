@@ -30,7 +30,7 @@ public class FindApplicablePriceUseCase {
      * @param date      the application date
      * @return the applicable price
      */
-    public Mono<Price> findPrice(Long productId, Long brandId, LocalDateTime date) {
+    public Mono<Price> findApplicablePrice(Long productId, Long brandId, LocalDateTime date) {
 
             return priceRepositoryPort.findApplicablePrice(productId, brandId, date)
                     .doOnError(e -> log.error("Error querying price for productId={}, brandId={}, date={}: {}", productId, brandId, date, e.getMessage()))

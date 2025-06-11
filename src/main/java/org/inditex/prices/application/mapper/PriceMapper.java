@@ -1,6 +1,7 @@
 package org.inditex.prices.application.mapper;
 
 import org.inditex.prices.application.dto.PriceResponseDto;
+import org.inditex.prices.domain.execption.PriceNotFoundException;
 import org.inditex.prices.domain.model.Price;
 import org.springframework.stereotype.Component;
 
@@ -25,7 +26,11 @@ public class PriceMapper {
      */
     public PriceResponseDto toResponse(Price price) {
         if (price == null) {
-            return null;
+            throw new PriceNotFoundException("Price not found");
+        }
+
+        if(price.getCurrency()==null){
+            throw new PriceNotFoundException("Price not found");
         }
 
         return PriceResponseDto.builder()

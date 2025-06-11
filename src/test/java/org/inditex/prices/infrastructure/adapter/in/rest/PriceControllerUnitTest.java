@@ -55,7 +55,7 @@ class PriceControllerUnitTest {
             validatorMock.when(() -> PriceRequestValidator.validate(date, time, productId, brandId))
                     .thenReturn(applicationDate);
 
-            when(priceServicePort.findPrice(productId, brandId, applicationDate))
+            when(priceServicePort.findApplicablePrice(productId, brandId, applicationDate))
                     .thenReturn(Mono.just(mockResponse));
 
             ResponseEntity<Mono<PriceResponseDto>> responseEntity = priceController.getPrice(productId, brandId, date, time);
@@ -75,7 +75,7 @@ class PriceControllerUnitTest {
                     .verifyComplete();
 
             validatorMock.verify(() -> PriceRequestValidator.validate(date, time, productId, brandId));
-            verify(priceServicePort).findPrice(productId, brandId, applicationDate);
+            verify(priceServicePort).findApplicablePrice(productId, brandId, applicationDate);
         }
     }
 

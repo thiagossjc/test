@@ -74,7 +74,7 @@ public class PriceController {
             String time) {
 
         LocalDateTime applicationDate = PriceRequestValidator.validate(date, time, productId, brandId);
-        return ResponseEntity.ok(priceServicePort.findPrice(productId, brandId, applicationDate));
+        return ResponseEntity.ok(priceServicePort.findApplicablePrice(productId, brandId, applicationDate));
     }
 
     /**

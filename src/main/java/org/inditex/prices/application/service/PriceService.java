@@ -1,12 +1,14 @@
 package org.inditex.prices.application.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.inditex.prices.application.dto.PriceResponseDto;
 import org.inditex.prices.application.mapper.PriceMapper;
 import org.inditex.prices.application.port.CircuitBreakerPort;
 import org.inditex.prices.application.port.PriceServicePort;
 import org.inditex.prices.application.port.TracePort;
 import org.inditex.prices.domain.execption.PriceNotFoundException;
+import org.inditex.prices.domain.model.Price;
 import org.inditex.prices.domain.usecase.FindAllPriceUseCase;
 import org.inditex.prices.domain.usecase.FindApplicablePriceUseCase;
 import org.inditex.prices.domain.usecase.StorePriceEventUseCase;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -22,6 +25,7 @@ import java.time.LocalDateTime;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PriceService implements PriceServicePort {
 
     private final FindApplicablePriceUseCase findPriceUseCase;
@@ -43,7 +47,12 @@ public class PriceService implements PriceServicePort {
                 circuitBreakerPort.executeCircuitBreaker(
                         "priceService",
                         findAllPriceUseCase.findAllPrice()
-                                .map(priceMapper::toResponse)
+                                .map(price -> {
+                                    log.debug("Mapping price: {}", price);
+                                    return priceMapper.toResponse(price);
+                                })
+                                .switchIfEmpty(Flux.error(new PriceNotFoundException("No prices found"))), // Propagate error
+                        PriceNotFoundException.class // Handle specific error
                 )
         );
     }
@@ -58,15 +67,21 @@ public class PriceService implements PriceServicePort {
      * @return a Mono of PriceResponseDto
      */
     @Override
-    public Mono<PriceResponseDto> findPrice(Long productId, Long brandId, LocalDateTime date) {
+    public Mono<PriceResponseDto> findApplicablePrice(Long productId, Long brandId, LocalDateTime date) {
         return tracingPort.trace(
                 "PriceService.findPrice",
                 circuitBreakerPort.executeCircuitBreaker(
                         "priceService",
-                        findPriceUseCase.findPrice(productId, brandId, date)
-                                .switchIfEmpty(Mono.error(new PriceNotFoundException("Price not found")))
+                        findPriceUseCase.findApplicablePrice(productId, brandId, date)
+                                .switchIfEmpty(Mono.error(new PriceNotFoundException("No price found for given criteria"))) // Propagate error
+                                .map(price -> {
+                                    log.debug("Found price: {}", price);
+                                    return price != null ? price : new Price(brandId, date, null, null, productId, 0, BigDecimal.ZERO, null);
+                                })
                                 .flatMap(price -> storeEventUseCase.storeEvent(price, date).thenReturn(price))
                                 .map(priceMapper::toResponse)
+                                .doOnError(e -> log.error("Error processing price: {}", e.getMessage())),
+                        PriceNotFoundException.class // Handle specific error
                 ),
                 "productId", productId.toString(),
                 "brandId", brandId.toString(),

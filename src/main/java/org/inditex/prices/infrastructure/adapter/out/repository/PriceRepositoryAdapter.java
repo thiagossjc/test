@@ -52,8 +52,7 @@ public class PriceRepositoryAdapter implements PriceRepositoryPort {
      */
     public Mono<Price> findApplicablePrice(Long productId, Long brandId, LocalDateTime date) {
         return priceRepository.findApplicablePrice(productId, brandId, date)
-                .map(priceMapper::toDomain)
-                .switchIfEmpty(Mono.error(new PriceNotFoundException("Price not found")));
+                .map(priceMapper::toDomain);
     }
 
     /**
@@ -69,6 +68,6 @@ public class PriceRepositoryAdapter implements PriceRepositoryPort {
     @Override
     public Flux<Price> getAll() {
         return priceRepository.findAllPrices().map(priceMapper::toDomain)
-                .switchIfEmpty(Flux.error(new PriceNotFoundException("Prices not found")));
+                .switchIfEmpty(price-> Flux.empty());
     }
 }

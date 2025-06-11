@@ -26,7 +26,7 @@ public interface PriceServicePort {
      * @param date the date for which the price is requested
      * @return a Mono emitting the applicable price response DTO, or empty if not found
      */
-    Mono<PriceResponseDto> findPrice(Long productId, Long brandId, LocalDateTime date);
+    Mono<PriceResponseDto> findApplicablePrice(Long productId, Long brandId, LocalDateTime date);
 
     /**
      * Fallback method used when a price cannot be retrieved due to an error.

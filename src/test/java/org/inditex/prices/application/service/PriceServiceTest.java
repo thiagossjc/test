@@ -27,66 +27,35 @@ import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for the {@link PriceService} class.
- * Tests the functionality of price-related operations, including finding applicable prices
- * and handling cases where prices are not found.
  */
 class PriceServiceTest {
 
-    /**
-     * Mock for the use case to find applicable prices.
-     */
     @Mock
     private FindApplicablePriceUseCase findPriceUseCase;
 
-    /**
-     * Mock for the use case to store price events.
-     */
     @Mock
     private StorePriceEventUseCase storeEventUseCase;
 
-    /**
-     * Mock for the tracing port to handle observability.
-     */
     @Mock
     private TracePort tracingPort;
 
-    /**
-     * Mock for the OpenTelemetry tracer.
-     */
     @Mock
     private Tracer tracer;
 
-    /**
-     * Mock for the circuit breaker port to handle fault tolerance.
-     */
     @Mock
     private CircuitBreakerPort circuitBreakerPort;
 
-    /**
-     * Mock for the price mapper to convert between domain models and DTOs.
-     */
     @Mock
     private PriceMapper priceMapper;
 
-    /**
-     * Instance of {@link PriceService} with injected mocks for testing.
-     */
     @InjectMocks
     private PriceService priceService;
 
-    /**
-     * Sets up the test environment by initializing mocks before each test.
-     */
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
     }
 
-    /**
-     * Tests the {@link PriceService#findPrice(Long, Long, LocalDateTime)} method
-     * to ensure it correctly retrieves a price for a given product, brand, and date.
-     * Verifies that the returned {@link PriceResponseDto} contains the expected values.
-     */
     @Test
     void testFindPrice() {
         // Arrange
@@ -109,13 +78,9 @@ class PriceServiceTest {
         responseDto.setStartDate(LocalDateTime.parse("2020-06-14T00:00:00").format(formatter));
         responseDto.setEndDate(LocalDateTime.parse("2020-12-31T23:59:59").format(formatter));
 
-        // Simulation findPriceUseCase
-        when(findPriceUseCase.findPrice(anyLong(), anyLong(), any(LocalDateTime.class))).thenReturn(Mono.just(price));
-        // Simulation priceMapper
+        when(findPriceUseCase.findApplicablePrice(anyLong(), anyLong(), any(LocalDateTime.class))).thenReturn(Mono.just(price));
         when(priceMapper.toResponse(price)).thenReturn(responseDto);
-        // Simulation storeEventUseCase
         when(storeEventUseCase.storeEvent(any(Price.class), any(LocalDateTime.class))).thenReturn(Mono.empty());
-        // Simulation tracingPort.trace
         when(tracingPort.trace(
                 eq("PriceService.findPrice"),
                 any(Mono.class),
@@ -123,12 +88,13 @@ class PriceServiceTest {
                 eq("brandId"), anyString(),
                 eq("date"), anyString()
         )).thenAnswer(invocation -> invocation.getArgument(1));
-        // Simulation circuitBreakerPort
-        when(circuitBreakerPort.executeCircuitBreaker(eq("priceService"), any(Mono.class)))
+        when(circuitBreakerPort.executeCircuitBreaker(
+                eq("priceService"),
+                any(Mono.class), eq(PriceNotFoundException.class)))
                 .thenAnswer(invocation -> invocation.getArgument(1));
 
         // Act
-        Mono<PriceResponseDto> result = priceService.findPrice(request.getProductId(), request.getBrandId(), request.getDate());
+        Mono<PriceResponseDto> result = priceService.findApplicablePrice(request.getProductId(), request.getBrandId(), request.getDate());
 
         // Assert
         StepVerifier.create(result)
@@ -139,7 +105,7 @@ class PriceServiceTest {
                 })
                 .verifyComplete();
 
-        verify(findPriceUseCase, times(1)).findPrice(35455L, 1L, request.getDate());
+        verify(findPriceUseCase, times(1)).findApplicablePrice(35455L, 1L, request.getDate());
         verify(priceMapper, times(1)).toResponse(price);
         verify(storeEventUseCase, times(1)).storeEvent(any(Price.class), any(LocalDateTime.class));
         verify(tracingPort, times(1)).trace(
@@ -149,24 +115,19 @@ class PriceServiceTest {
                 eq("brandId"), anyString(),
                 eq("date"), anyString()
         );
-        verify(circuitBreakerPort, times(1)).executeCircuitBreaker(eq("priceService"), any(Mono.class));
+        verify(circuitBreakerPort, times(1)).executeCircuitBreaker(eq("priceService"), any(Mono.class), eq(PriceNotFoundException.class));
     }
 
-    /**
-     * Tests the {@link PriceService#findPrice(Long, Long, LocalDateTime)} method
-     * when no price is found for the given product, brand, and date.
-     * Verifies that a {@link PriceNotFoundException} is thrown with the appropriate message.
-     */
     @Test
     void testFindPriceNotFound() {
         LocalDateTime now = LocalDateTime.now();
 
-        when(findPriceUseCase.findPrice(anyLong(), anyLong(), any(LocalDateTime.class)))
+        when(findPriceUseCase.findApplicablePrice(anyLong(), anyLong(), any(LocalDateTime.class)))
                 .thenReturn(Mono.empty());
-
-        when(circuitBreakerPort.executeCircuitBreaker(eq("priceService"), any(Mono.class)))
-                .thenAnswer(invocation -> invocation.getArgument(1));
-
+        when(circuitBreakerPort.executeCircuitBreaker(
+                eq("priceService"),
+                any(Mono.class), eq(PriceNotFoundException.class)))
+                .thenAnswer(invocation -> Mono.error(new RuntimeException("Service unavailable, please try again later")));
         when(tracingPort.trace(
                 eq("PriceService.findPrice"),
                 any(Mono.class),
@@ -176,17 +137,16 @@ class PriceServiceTest {
         )).thenAnswer(invocation -> invocation.getArgument(1));
 
         // Act
-        Mono<PriceResponseDto> result = priceService.findPrice(1L, 1L, now);
+        Mono<PriceResponseDto> result = priceService.findApplicablePrice(1L, 1L, now);
 
         // Assert
         StepVerifier.create(result)
-                .expectErrorMatches(throwable -> throwable instanceof PriceNotFoundException
-                        && throwable.getMessage().equals("Price not found"))
+                .expectErrorMatches(throwable -> throwable instanceof RuntimeException
+                        && throwable.getMessage().equals("Service unavailable, please try again later"))
                 .verify();
 
-        // Verificar interacciones
-        verify(findPriceUseCase, times(1)).findPrice(1L, 1L, now);
-        verify(circuitBreakerPort, times(1)).executeCircuitBreaker(eq("priceService"), any(Mono.class));
+        verify(findPriceUseCase, times(1)).findApplicablePrice(1L, 1L, now);
+        verify(circuitBreakerPort, times(1)).executeCircuitBreaker(eq("priceService"), any(Mono.class), eq(PriceNotFoundException.class));
         verify(tracingPort, times(1)).trace(
                 eq("PriceService.findPrice"),
                 any(Mono.class),
