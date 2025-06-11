@@ -127,7 +127,7 @@ class PriceServiceTest {
         when(circuitBreakerPort.executeCircuitBreaker(
                 eq("priceService"),
                 any(Mono.class), eq(PriceNotFoundException.class)))
-                .thenAnswer(invocation -> Mono.error(new RuntimeException("Service unavailable, please try again later")));
+                .thenAnswer(invocation -> invocation.getArgument(1));
         when(tracingPort.trace(
                 eq("PriceService.findPrice"),
                 any(Mono.class),
@@ -141,8 +141,8 @@ class PriceServiceTest {
 
         // Assert
         StepVerifier.create(result)
-                .expectErrorMatches(throwable -> throwable instanceof RuntimeException
-                        && throwable.getMessage().equals("Service unavailable, please try again later"))
+                .expectErrorMatches(throwable -> throwable instanceof PriceNotFoundException
+                        && throwable.getMessage().equals("No price found for given criteria"))
                 .verify();
 
         verify(findPriceUseCase, times(1)).findApplicablePrice(1L, 1L, now);

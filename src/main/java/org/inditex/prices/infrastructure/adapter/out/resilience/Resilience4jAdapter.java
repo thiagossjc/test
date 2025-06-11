@@ -42,7 +42,7 @@ public class Resilience4jAdapter implements CircuitBreakerPort {
      *
      * @param operationName the name of the operation for tracing or logging purposes
      * @param operation the Mono operation to be executed
-     * @param classNameError the class of the error to be handled or ignored by the circuit breaker
+     * @param classNameError the class of the error to be propagated without wrapping
      * @param <T> the type of the operation result
      * @return a Mono emitting the result of the operation, wrapped with circuit breaker behavior
      */
@@ -51,9 +51,13 @@ public class Resilience4jAdapter implements CircuitBreakerPort {
         CircuitBreaker circuitBreaker = getOrCreateCircuitBreaker(operationName, classNameError);
         return Mono.fromCallable(() -> circuitBreaker)
                 .flatMap(cb -> operation.transformDeferred(CircuitBreakerOperator.of(cb)))
-                .doOnError(e -> log.error("Error detectado [{}]: {}", e.getClass().getSimpleName(), e.getMessage()))
-                .onErrorResume(Throwable.class, e -> {
-                    log.warn("Recuperando de error [{}], lanzando error personalizado", e.getClass().getSimpleName());
+                .doOnError(e -> log.error("Error detected [{}]: {}", e.getClass().getSimpleName(), e.getMessage()))
+                .onErrorResume(e -> {
+                    if (classNameError.isInstance(e)) {
+                        log.warn("Propagating exception [{}]: {}", e.getClass().getSimpleName(), e.getMessage());
+                        return Mono.error(e);
+                    }
+                    log.warn("Recovering from error [{}], throwing custom error", e.getClass().getSimpleName());
                     return Mono.error(new RuntimeException("Service unavailable, please try again later", e));
                 });
     }
@@ -63,7 +67,7 @@ public class Resilience4jAdapter implements CircuitBreakerPort {
      *
      * @param operationName the name of the operation for tracing or logging purposes
      * @param operation the Flux operation to be executed
-     * @param classNameError the class of the error to be handled or ignored by the circuit breaker
+     * @param classNameError the class of the error to be propagated without wrapping
      * @param <T> the type of the elements emitted by the Flux operation
      * @return a Flux emitting the results of the operation, wrapped with circuit breaker behavior
      */
@@ -71,9 +75,13 @@ public class Resilience4jAdapter implements CircuitBreakerPort {
     public <T> Flux<T> executeCircuitBreaker(String operationName, Flux<T> operation, Class<? extends Throwable> classNameError) {
         CircuitBreaker circuitBreaker = getOrCreateCircuitBreaker(operationName, classNameError);
         return Flux.from(operation.transformDeferred(CircuitBreakerOperator.of(circuitBreaker)))
-                .doOnError(e -> log.error("Error detectado [{}]: {}", e.getClass().getSimpleName(), e.getMessage()))
-                .onErrorResume(Throwable.class, e -> {
-                    log.warn("Recuperando de error [{}], lanzando error personalizado", e.getClass().getSimpleName());
+                .doOnError(e -> log.error("Error detected [{}]: {}", e.getClass().getSimpleName(), e.getMessage()))
+                .onErrorResume(e -> {
+                    if (classNameError.isInstance(e)) {
+                        log.warn("Propagating exception [{}]: {}", e.getClass().getSimpleName(), e.getMessage());
+                        return Flux.error(e);
+                    }
+                    log.warn("Recovering from error [{}], throwing custom error", e.getClass().getSimpleName());
                     return Flux.error(new RuntimeException("Service unavailable, please try again later", e));
                 });
     }
