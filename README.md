@@ -102,7 +102,7 @@ Use a client like BloomRPC with `price.proto`:
 ```proto
 syntax = "proto3";
 
-option java_package = "org.inditex.prices.infrastructure.adapter.grpc";
+option java_package = "org.organization.prices.infrastructure.adapter.grpc";
 option java_multiple_files = true;
 
 service PriceService {
@@ -172,17 +172,17 @@ View the report at: `target/site/jacoco/index.html`
 ## 🧱 Architecture
 Hexagonal
 
-**Domain Layer** (`org.inditex.prices.domain`)
+**Domain Layer** (`org.organization.prices.domain`)
 - Models: `Price`, `PriceEvent`
 - Ports: `PriceServicePort`, `EventStorePort`
 - Use Cases: `FindApplicablePriceUseCase`, `StorePriceEventUseCase`
 
-**Application Layer** (`org.inditex.prices.application`)
+**Application Layer** (`org.organization.prices.application`)
 - Services: `PriceService - > business logic`
 - DTOs: `PriceRequestDto`, `PriceResponseDto`
 - Mapper: `PriceMapper`
 
-**Infrastructure Layer (org.inditex.prices.infrastructure)
+**Infrastructure Layer (org.organization.prices.infrastructure)
 
 - REST Endpoints:
 - PriceController: Exposes REST APIs for price queries, located in adapter/in/rest.

@@ -1,6 +1,6 @@
 spring:
   application:
-    name: inditex-prices
+    name: organization-prices
   h2:
     console:
       enabled: true
@@ -28,14 +28,14 @@ spring:
   aot:
     enabled: false
 
-inditex:
+organization:
   kafka:
     topic: priceTopic
 
 opentelemetry:
   resource:
     service:
-      name: inditex-prices # Identifica el servicio en Zipkin
+      name: organization-prices # Identifica el servicio en Zipkin
   zipkin:
     endpoint: http://localhost:9411/api/v2/spans
 
@@ -69,7 +69,7 @@ logging:
     reactor.core: DEBUG
     reactor.netty: DEBUG
     org.springframework: DEBUG  # Cambia de INFO a DEBUG
-    org.inditex.prices: DEBUG
+    org.organization.prices: DEBUG
     org.h2: TRACE
     com.h2database: TRACE
     org.springframework.boot.web: TRACE  # Para capturar errores en el servlet

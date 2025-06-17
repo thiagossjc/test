@@ -1,6 +1,6 @@
 asyncapi: 2.6.0
 info:
-  title: Inditex Price Events API
+  title: organization Price Events API
   version: 1.0.0
   description: Asynchronous API for publishing price query events
 servers:
